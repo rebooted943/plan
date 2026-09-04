@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Plan Nutrițional - 14 Zile</title>
+    <style>
+        :root {
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #3c3c43;
+            --accent: #007aff;
+            --accent-bg: #e5f1ff;
+            --border: #c6c6c8;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        header {
+            padding: 20px 16px 10px;
+            position: sticky;
+            top: 0;
+            background: rgba(242, 242, 247, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin: 0 0 4px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        main {
+            padding: 16px;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        }
+
+        .day-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .day-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .macros {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        details {
+            margin-bottom: 12px;
+            background: #fafafa;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        details:last-child {
+            margin-bottom: 0;
+        }
+
+        summary {
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::after {
+            content: '›';
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: transform 0.2s ease;
+        }
+
+        details[open] summary::after {
+            transform: rotate(90deg);
+        }
+
+        .meal-content {
+            padding: 0 12px 12px;
+            font-size: 15px;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            margin-top: 4px;
+            padding-top: 12px;
+        }
+
+        .tag-btn {
+            background-color: var(--accent-bg);
+            color: var(--accent);
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* Bottom Sheet Modal */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 85vh;
+            background: var(--card-bg);
+            border-radius: 20px 20px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1);
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+
+        .sheet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sheet-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: #e5e5ea;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .sheet-content {
+            padding: 16px 20px;
+            overflow-y: auto;
+        }
+
+        .alt-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .alt-item:last-child {
+            border-bottom: none;
+        }
+        
+        .alt-item.urgency {
+            background: #fff8e1;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            border: 1px solid #ffe082;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Plan 14 Zile</h1>
+        <p>Apasă pe mese pentru detalii. Apasă pe coduri pentru alternative.</p>
+    </header>
+
+    <main id="app-content"></main>
+
+    <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="sheet-header">
+            <h2 id="sheetTitle">Alternative</h2>
+            <button class="close-btn" onclick="closeSheet()">&times;</button>
+        </div>
+        <div class="sheet-content" id="sheetContent"></div>
+    </div>
+
+    <script>
+        const alternativesData = {
+            "C1": [
+                "Pancakes: 45g făină de ovăz, 150g albuș, 10g cacao, îndulcitor",
+                "Pancakes: 45g făină de ovăz, 150g albuș, vanilie",
+                "Porridge: 40g fulgi ovăz, 150g lapte degresat, 25g pudră proteică",
+                "URGENȚĂ: 1 sticluță Kefir/Sana (330ml) + 1 banană + 20g migdale"
+            ],
+            "C2": [
+                "Toast Sărat: 50g pâine secară, 150g brânză perle, 50g roșii",
+                "Iaurt Bowl: 170g iaurt grecesc 2%, 35g fulgi ovăz, 80g fructe de pădure",
+                "Toast Sărat: 50g pâine secară, 100g somon afumat, 50g castraveți",
+                "Toast Sărat: 50g pâine secară, 2 ouă fierte, sare și piper",
+                "Iaurt Bowl: 170g iaurt grecesc 2%, 30g fulgi ovăz, 15g unt arahide",
+                "URGENȚĂ: 1 sticluță Kefir/Sana (330ml) + 1 banană + 20g migdale"
+            ],
+            "S1": [
+                "Brownie proteic fit (porție 60g)",
+                "150g iaurt grecesc 2% (sau 0%)",
+                "200g brânză de vaci slabă (0.2-1%) cu scorțișoară/stevia",
+                "URGENȚĂ: 1 baton proteic low sugar (~50g) SAU 1 iaurt proteic (200g)"
+            ],
+            "S2": [
+                "20g migdale crude",
+                "15g nuci",
+                "1 măr mediu (150g)",
+                "1 pară sau portocală (150g)",
+                "15g semințe de dovleac",
+                "URGENȚĂ: 1 baton proteic low sugar (~50g)"
+            ],
+            "P1": [
+                "Resturi cină: Pește/Tofu/Omletă + 3 rondele orez/porumb (30g)",
+                "Resturi cină: Pește/Tofu/Omletă + 50g pâine integrală",
+                "Resturi cină: Tofu/Legume + 150g orez basmati/cușcuș fiert",
+                "URGENȚĂ: Salată la pungă + 1 conservă pește/ton + roșii cherry + 4 rondele orez"
+            ],
+            "P2": [
+                "Salată: 150g năut, 1 conservă ton (112g), 150g roșii, 5g ulei",
+                "Salată paste: 60g paste integrale, 60g telemea light, 150g castraveți, 5g ulei",
+                "Salată: 160g linte, 1 ou fiert, 100g morcovi rași, 5g ulei",
+                "Salată: 1 conservă sardine (100g), 150g roșii, 50g crutoane",
+                "Salată paste: 60g paste integrale, 1 conservă ton (112g), 100g porumb, 5g ulei",
+                "URGENȚĂ: Salată la pungă + 1 conservă pește/ton + roșii cherry + 4 rondele orez"
+            ],
+            "CEN1": [
+                "La tigaie: 200g file merluciu, 250g dovlecei rondele, 10g ulei",
+                "La tigaie: 220g merluciu, 150g roșii cubulețe, 10g măsline, 5g ulei",
+                "La cuptor: 1 păstrăv curățat (200g), 200g morcovi și dovlecei, 5g ulei",
+                "La tigaie: 200g merluciu, 200g mazăre și ceapă, 5g ulei",
+                "La tigaie: 200g midii decorticate sau merluciu, 250g dovlecei, 5g ulei",
+                "La cuptor: 200g merluciu, 150g cartofi cubulețe, rozmarin, 5g ulei",
+                "URGENȚĂ: 200g perle brânză + 100g somon afumat + castravete + 2 felii Wasa"
+            ],
+            "CEN2": [
+                "La tigaie: 1 macrou întreg curățat (200g), 200g fasole verde, 5g ulei",
+                "La cuptor: 1 macrou (200g) pe pat de 250g conopidă/broccoli congelat, 5g ulei",
+                "La tigaie: 1 medalion somon sau păstrăv (150g), 200g fasole verde, 5g ulei",
+                "URGENȚĂ: 200g perle brânză + 100g somon afumat + castravete + 2 felii Wasa"
+            ],
+            "CEN3": [
+                "Omletă tigaie: 2 ouă întregi + 100g albuș cu 200g spanac, 5g ulei",
+                "Tofu tigaie (180g) cu 200g varză albă, sos soia, 10g ulei",
+                "Tigaie: 2 ouă ochiuri + 150g ciuperci, 1 felie pâine (35g), 5g ulei",
+                "Omletă tigaie: 2 ouă + 100g albuș cu 150g ciuperci felii, 5g ulei",
+                "Tofu tigaie (180g) cu 200g ardei gras fâșii, sos soia, 10g ulei",
+                "URGENȚĂ: 200g perle brânză + 100g somon afumat + castravete + 2 felii Wasa"
+            ]
+        };
+
+        const planData = [
+            { day: 1, macros: "1520 kcal | 118g Pro | 125g Cho | 52g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Pancakes: 45g ovăz, 150g albuș, 10g cacao", note: "Amestecă ingredientele și gătește în tigaie antiaderentă." },
+                { type: "Gustare 1", code: "S2", desc: "20g migdale" },
+                { type: "Prânz", code: "P2", desc: "Salată: 150g năut, 1 conservă ton (112g scurs), 150g roșii, 5g ulei" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (porție 60g)" },
+                { type: "Cină", code: "CEN1", desc: "200g file merluciu (congelat), 250g dovlecei rondele, 10g ulei", note: "One-Pan: Pune peștele și dovleceii în tigaie cu uleiul. Pune capacul și gătește la foc mediu 10 min." }
+            ]},
+            { day: 2, macros: "1540 kcal | 115g Pro | 120g Cho | 58g Fat", meals: [
+                { type: "Mic Dejun", code: "C2", desc: "Toast: 50g pâine secară, 150g brânză perle, 50g roșii, oregano" },
+                { type: "Gustare 1", code: "S1", desc: "150g iaurt grecesc 2%" },
+                { type: "Prânz", code: "P1", desc: "Resturi: 200g merluciu + 250g dovlecei + 3 rondele orez (30g)" },
+                { type: "Gustare 2", code: "S2", desc: "1 măr mediu (150g)" },
+                { type: "Cină", code: "CEN2", desc: "1 macrou curățat (200g), 200g fasole verde congelată, 5g ulei", note: "One-Pan: Totul în tigaie cu capac (10-12 min) pentru a găti peștele în propriul abur." }
+            ]},
+            { day: 3, macros: "1510 kcal | 106g Pro | 115g Cho | 63g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Pancakes: 45g ovăz, 150g albuș, 10g cacao" },
+                { type: "Gustare 1", code: "S2", desc: "15g nuci" },
+                { type: "Prânz", code: "P1", desc: "Resturi: 100g macrou rece + 150g fasole verde + 50g pâine integrală" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (60g)" },
+                { type: "Cină", code: "CEN3", desc: "Omletă: 2 ouă + 100g albuș cu 200g spanac congelat, 5g ulei", note: "Decongelează rapid spanacul în tigaie, adaugă ouăle bătute și gătește 3-4 min." }
+            ]},
+            { day: 4, macros: "1500 kcal | 120g Pro | 110g Cho | 50g Fat", meals: [
+                { type: "Mic Dejun", code: "C2", desc: "Iaurt Bowl: 170g iaurt grecesc 2%, 35g ovăz, 80g fructe de pădure" },
+                { type: "Gustare 1", code: "S2", desc: "20g migdale" },
+                { type: "Prânz", code: "P1", desc: "Resturi: Omletă cu spanac (rece) + 1 măr" },
+                { type: "Gustare 2", code: "S1", desc: "200g brânză de vaci slabă cu scorțișoară" },
+                { type: "Cină", code: "CEN1", desc: "220g merluciu, 150g roșii, oregano, 10g măsline, 5g ulei" }
+            ]},
+            { day: 5, macros: "1590 kcal | 108g Pro | 142g Cho | 54g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Pancakes: 45g ovăz, 150g albuș, vanilie" },
+                { type: "Gustare 1", code: "S2", desc: "1 pară sau măr (150g)" },
+                { type: "Prânz", code: "P2", desc: "Salată paste: 60g paste integrale, 60g telemea light, 150g castraveți, 5g ulei" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (60g)" },
+                { type: "Cină", code: "CEN1", desc: "1 păstrăv (200g), 200g morcovi/dovlecei la cuptor, 5g ulei", note: "Zero Curățare: Pune hârtie de copt în tavă, așază peștele și legumele, coace la 200°C 15-20 min." }
+            ]},
+            { day: 6, macros: "1550 kcal | 112g Pro | 118g Cho | 60g Fat", meals: [
+                { type: "Mic Dejun", code: "C2", desc: "Toast: 50g pâine secară, 100g somon afumat, 50g castraveți" },
+                { type: "Gustare 1", code: "S2", desc: "15g nuci" },
+                { type: "Prânz", code: "P1", desc: "Resturi: 100g păstrăv rece + legume cuptor + 2 rondele" },
+                { type: "Gustare 2", code: "S1", desc: "150g iaurt grecesc 2%" },
+                { type: "Cină", code: "CEN3", desc: "180g tofu cubulețe, 200g varză albă, sos soia, 10g ulei", note: "Călește tofu cu varza tăiată fin 5-7 min la foc viu, stinge cu sos de soia." }
+            ]},
+            { day: 7, macros: "1510 kcal | 98g Pro | 130g Cho | 56g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Pancakes: 45g ovăz, 150g albuș, 10g cacao" },
+                { type: "Gustare 1", code: "S2", desc: "20g migdale" },
+                { type: "Prânz", code: "P1", desc: "Resturi: Tofu și varză rece/încălzit + 150g orez basmati fiert" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (60g)" },
+                { type: "Cină", code: "CEN3", desc: "2 ouă ochiuri + 150g ciuperci, 1 felie pâine integrală, 5g ulei" }
+            ]},
+            { day: 8, macros: "1560 kcal | 116g Pro | 135g Cho | 53g Fat", meals: [
+                { type: "Mic Dejun", code: "C2", desc: "Iaurt Bowl: 170g iaurt grecesc 2%, 30g ovăz, 15g unt arahide" },
+                { type: "Gustare 1", code: "S2", desc: "1 măr (150g)" },
+                { type: "Prânz", code: "P2", desc: "Salată: 160g linte, 1 ou fiert, 100g morcovi rași, 5g ulei" },
+                { type: "Gustare 2", code: "S1", desc: "200g brânză de vaci slabă cu stevia" },
+                { type: "Cină", code: "CEN1", desc: "200g merluciu bucăți cu 200g mazăre congelată, ceapă, 5g ulei", note: "One-Pan: Călește ușor ceapa, adaugă peștele și mazărea congelată, acoperă." }
+            ]},
+            { day: 9, macros: "1560 kcal | 115g Pro | 120g Cho | 55g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Porridge: 40g ovăz, 150g lapte degresat, 25g pudră proteică" },
+                { type: "Gustare 1", code: "S2", desc: "1 portocală (150g)" },
+                { type: "Prânz", code: "P1", desc: "Resturi: Merluciu și mazăre + 2 rondele (20g)" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (60g)" },
+                { type: "Cină", code: "CEN2", desc: "1 macrou cuptor (200g) pe pat de 250g conopidă congelată, 5g ulei", note: "La cuptor 200°C cu hârtie de copt." }
+            ]},
+            { day: 10, macros: "1500 kcal | 118g Pro | 110g Cho | 51g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Pancakes: 45g ovăz, 150g albuș, 10g cacao" },
+                { type: "Gustare 1", code: "S2", desc: "20g migdale" },
+                { type: "Prânz", code: "P2", desc: "Salată: 1 conservă sardine/macrou (100g scurs), 150g roșii, 50g crutoane" },
+                { type: "Gustare 2", code: "S1", desc: "150g iaurt grecesc 2%" },
+                { type: "Cină", code: "CEN1", desc: "200g midii decorticate sau merluciu, 250g dovlecei, usturoi, 5g ulei" }
+            ]},
+            { day: 11, macros: "1520 kcal | 110g Pro | 115g Cho | 60g Fat", meals: [
+                { type: "Mic Dejun", code: "C2", desc: "Toast: 50g pâine secară, 2 ouă fierte felii" },
+                { type: "Gustare 1", code: "S2", desc: "15g nuci" },
+                { type: "Prânz", code: "P1", desc: "Resturi: Midii/pește și dovlecei + 50g cușcuș prefiert rece" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (60g)" },
+                { type: "Cină", code: "CEN3", desc: "Omletă: 2 ouă + 100g albuș cu 150g ciuperci felii, 5g ulei" }
+            ]},
+            { day: 12, macros: "1550 kcal | 112g Pro | 105g Cho | 65g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Pancakes: 45g ovăz, 150g albuș, îndulcitor" },
+                { type: "Gustare 1", code: "S2", desc: "1 măr (150g)" },
+                { type: "Prânz", code: "P1", desc: "Resturi: Omletă cu ciuperci rece + 1 castravete felii" },
+                { type: "Gustare 2", code: "S1", desc: "200g brânză de vaci slabă" },
+                { type: "Cină", code: "CEN2", desc: "1 medalion somon/păstrăv (150g), 200g fasole verde, 5g ulei", note: "Tigaie cu capac pentru reținerea aburilor (10 min)." }
+            ]},
+            { day: 13, macros: "1570 kcal | 110g Pro | 138g Cho | 54g Fat", meals: [
+                { type: "Mic Dejun", code: "C2", desc: "Iaurt Bowl: 170g iaurt grecesc 2%, 35g ovăz, 10g cacao" },
+                { type: "Gustare 1", code: "S2", desc: "20g migdale" },
+                { type: "Prânz", code: "P2", desc: "Salată paste: 60g paste integrale, 1 conservă ton (112g), 100g porumb, 5g ulei" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (60g)" },
+                { type: "Cină", code: "CEN3", desc: "180g tofu cubulețe, 200g ardei gras fâșii, sos soia, 10g ulei" }
+            ]},
+            { day: 14, macros: "1530 kcal | 106g Pro | 130g Cho | 52g Fat", meals: [
+                { type: "Mic Dejun", code: "C1", desc: "Pancakes: 45g ovăz, 150g albuș, vanilie" },
+                { type: "Gustare 1", code: "S2", desc: "15g semințe de dovleac" },
+                { type: "Prânz", code: "P1", desc: "Resturi: Tofu și ardei rece + 3 rondele (30g)" },
+                { type: "Gustare 2", code: "S1", desc: "Brownie proteic fit (60g)" },
+                { type: "Cină", code: "CEN1", desc: "200g merluciu la cuptor cu 150g cartofi cubulețe subțiri, rozmarin, 5g ulei" }
+            ]}
+        ];
+
+        function renderApp() {
+            const container = document.getElementById('app-content');
+            planData.forEach(day => {
+                let mealsHtml = '';
+                day.meals.forEach(meal => {
+                    let prepNote = meal.note ? `<p style="margin: 8px 0 0; font-size: 14px;"><strong>Prep:</strong> ${meal.note}</p>` : '';
+                    mealsHtml += `
+                        <details>
+                            <summary>
+                                <span><strong>${meal.type}</strong> <span style="font-weight:400; color:var(--text-secondary); margin-left:6px;">[${meal.code}]</span></span>
+                            </summary>
+                            <div class="meal-content">
+                                ${meal.desc}
+                                ${prepNote}
+                                <br>
+                                <button class="tag-btn" onclick="openSheet('${meal.code}', event)">Vedeți alternative ${meal.code}</button>
+                            </div>
+                        </details>
+                    `;
+                });
+
+                const cardHtml = `
+                    <div class="day-card">
+                        <div class="day-header">
+                            <h3 class="day-title">Ziua ${day.day}</h3>
+                            <span class="macros">${day.macros}</span>
+                        </div>
+                        ${mealsHtml}
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        function openSheet(code, event) {
+            if(event) event.preventDefault(); 
+            const alts = alternativesData[code];
+            if (!alts) return;
+
+            document.getElementById('sheetTitle').innerText = `Alternative pentru [${code}]`;
+            
+            const content = document.getElementById('sheetContent');
+            content.innerHTML = '';
+            alts.forEach(alt => {
+                const isUrgency = alt.includes("URGENȚĂ");
+                const cleanAlt = alt.replace("URGENȚĂ:", "<strong>URGENȚĂ (Supermarket):</strong>");
+                content.innerHTML += `<div class="alt-item ${isUrgency ? 'urgency' : ''}">${cleanAlt}</div>`;
+            });
+
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('bottomSheet').classList.add('active');
+            
+            // Prevent body scroll when modal open
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSheet() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('bottomSheet').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', renderApp);
+    </script>
+</body>
+</html>
